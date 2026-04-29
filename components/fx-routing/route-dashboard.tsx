@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import {
+  ChevronLeft,
+  ChevronRight,
+  X,
   ArrowRightLeft,
   BriefcaseBusiness,
   Clock3,
@@ -34,7 +37,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Priority, RouteDecisionResult, SimulationSummary } from "@/lib/types/fx-routing";
+import {
+  Priority,
+  ReplayHistoryPage,
+  ReplayHistoryItem,
+  RouteDecisionResult,
+  SimulationSummary,
+} from "@/lib/types/fx-routing";
 
 type RouteFormState = {
   amount: number;
@@ -62,6 +71,10 @@ export function RouteDashboard() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [result, setResult] = useState<RouteDecisionResult | null>(null);
   const [simulation, setSimulation] = useState<SimulationSummary | null>(null);
+  const [replayHistory, setReplayHistory] = useState<ReplayHistoryItem[]>([]);
+  const [replayPageInfo, setReplayPageInfo] = useState<Pick<ReplayHistoryPage, "page" | "pageSize" | "totalItems" | "totalPages"> | null>(null);
+  const [isReplaySectionOpen, setIsReplaySectionOpen] = useState(false);
+  const [isReplayLoading, setIsReplayLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const simulationRows = useMemo(() => {
@@ -133,6 +146,60 @@ export function RouteDashboard() {
       setError(err instanceof Error ? err.message : "Batch error");
     } finally {
       setIsSimulating(false);
+    }
+  }
+
+  async function loadReplayHistory(page = 1) {
+    setIsReplayLoading(true);
+    setError(null);
+    try {
+      const pageSize = replayPageInfo?.pageSize ?? 6;
+      const response = await fetch(`/api/route/replay?page=${page}&pageSize=${pageSize}`);
+      const data = (await response.json()) as ReplayHistoryPage | { details?: string };
+
+      if (!response.ok) {
+        throw new Error(data.details ?? "Unable to fetch replay history");
+      }
+
+      const pageData = data as ReplayHistoryPage;
+      setReplayHistory(pageData.items ?? []);
+      setReplayPageInfo({
+        page: pageData.page,
+        pageSize: pageData.pageSize,
+        totalItems: pageData.totalItems,
+        totalPages: pageData.totalPages,
+      });
+      setIsReplaySectionOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Replay history error");
+    } finally {
+      setIsReplayLoading(false);
+    }
+  }
+
+  async function replayDecision(transactionId: string) {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/route/replay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId }),
+      });
+
+      const data = (await response.json()) as RouteDecisionResult | { details?: string; error?: string };
+      if (!response.ok) {
+        const message = "details" in data ? data.details : undefined;
+        throw new Error(message ?? "Replay execution failed");
+      }
+
+      setResult(data as RouteDecisionResult);
+      await loadReplayHistory(replayPageInfo?.page ?? 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Replay error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -323,6 +390,14 @@ export function RouteDashboard() {
               >
                 {isSimulating ? "Running simulation..." : "Simulate 1000 Transactions"}
               </Button>
+              <Button
+                variant="outline"
+                className="h-10 rounded-xl border-slate-300 bg-white hover:bg-slate-50"
+                disabled={isReplayLoading}
+                onClick={() => loadReplayHistory(1)}
+              >
+                {isReplayLoading ? "Loading replays..." : "Load Replay History"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -379,6 +454,95 @@ export function RouteDashboard() {
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-sm text-slate-500">
                   Submit a transaction profile to generate route intelligence.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-slate-300/75 bg-white/90 shadow-[0_22px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <TrendingUp className="size-4.5 text-slate-700" />
+                  Replay Decisions
+                </CardTitle>
+                {isReplaySectionOpen ? (
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="rounded-lg"
+                    onClick={() => setIsReplaySectionOpen(false)}
+                    aria-label="Close replay section"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
+              <CardDescription>Re-run historical simulations using their original parameters.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isReplaySectionOpen && replayHistory.length ? (
+                <div className="space-y-2">
+                  {replayHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {item.amount.toFixed(2)} {item.sourceCurrency} to {item.destinationCurrency}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {item.priority.toUpperCase()} | {item.selectedRailCode} | {new Date(item.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-lg border-slate-300"
+                        onClick={() => replayDecision(item.id)}
+                        disabled={isSubmitting}
+                      >
+                        Replay
+                      </Button>
+                    </div>
+                  ))}
+
+                  {replayPageInfo ? (
+                    <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <p className="text-xs text-slate-600">
+                        Page {replayPageInfo.page} of {replayPageInfo.totalPages} ({replayPageInfo.totalItems} items)
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="icon-sm"
+                          variant="outline"
+                          className="rounded-lg"
+                          disabled={isReplayLoading || replayPageInfo.page <= 1}
+                          onClick={() => loadReplayHistory(replayPageInfo.page - 1)}
+                          aria-label="Previous replay page"
+                        >
+                          <ChevronLeft className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="outline"
+                          className="rounded-lg"
+                          disabled={isReplayLoading || replayPageInfo.page >= replayPageInfo.totalPages}
+                          onClick={() => loadReplayHistory(replayPageInfo.page + 1)}
+                          aria-label="Next replay page"
+                        >
+                          <ChevronRight className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-sm text-slate-500">
+                  {isReplaySectionOpen
+                    ? "No replay records found for this page."
+                    : "Load replay history to view and rerun previous decisions."}
                 </div>
               )}
             </CardContent>

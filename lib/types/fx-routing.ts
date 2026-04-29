@@ -60,3 +60,27 @@ export type SimulationSummary = {
   chosenCountByRail: Record<string, number>;
   averageCostByRail: Record<string, number>;
 };
+
+export type ReplayHistoryItem = {
+  id: string;
+  createdAt: string;
+  amount: number;
+  sourceCurrency: string;
+  destinationCurrency: string;
+  priority: Priority;
+  maxTime?: number;
+  maxFeePercent?: number;
+  whatIfShockPercent?: number;
+  selectedRailCode: string;
+  totalCostSource: number;
+  settlementTimeHours: number;
+  anomalyFlag: boolean;
+};
+
+export type ReplayHistoryPage = {
+  items: ReplayHistoryItem[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};

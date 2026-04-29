@@ -1,7 +1,12 @@
 import { DEFAULT_DESTINATION_CURRENCY } from "@/lib/constants/fx";
 import { computeOptimalRoute } from "@/lib/services/decision-engine";
-import { saveRouteSimulation, runSimulationBatch } from "@/lib/services/transaction-service";
-import { RouteRequest, SimulationSummary } from "@/lib/types/fx-routing";
+import {
+  getReplayHistoryPage,
+  getReplayRequestById,
+  saveRouteSimulation,
+  runSimulationBatch,
+} from "@/lib/services/transaction-service";
+import { ReplayHistoryPage, RouteRequest, SimulationSummary } from "@/lib/types/fx-routing";
 import { RouteRequestInput } from "@/lib/validations/route-request";
 
 function toRouteRequest(input: RouteRequestInput): RouteRequest {
@@ -35,4 +40,23 @@ export async function simulateRouting(input: {
     priority: input.priority,
     computeRoute: computeOptimalRoute,
   });
+}
+
+export async function getRouteReplayHistoryPage(params?: {
+  page?: number;
+  pageSize?: number;
+}): Promise<ReplayHistoryPage> {
+  return getReplayHistoryPage(params);
+}
+
+export async function replayRouteDecision(transactionId: string) {
+  const request = await getReplayRequestById(transactionId);
+
+  if (!request) {
+    throw new Error("Replay source transaction not found.");
+  }
+
+  const result = await computeOptimalRoute(request);
+  await saveRouteSimulation(result);
+  return result;
 }
