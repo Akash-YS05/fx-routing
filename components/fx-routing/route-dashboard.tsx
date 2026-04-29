@@ -12,7 +12,6 @@ import {
   Gauge,
   Radar,
   ShieldCheck,
-  Sparkles,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -217,7 +216,7 @@ export function RouteDashboard() {
   const hasReplay = isReplaySectionOpen && replayHistory.length > 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-[1380px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+    <main className="mx-auto flex w-full max-w-[1380px] flex-col gap-5 px-3 py-5 sm:px-4 md:gap-6 md:px-8 md:py-8">
       <section className="relative overflow-hidden rounded-3xl border border-[#dce5fb] bg-[linear-gradient(132deg,#f4f7ff_0%,#edf2ff_42%,#f7f9ff_100%)] p-6 shadow-[0_34px_70px_-48px_rgba(49,80,150,0.45),inset_0_1px_0_0_rgba(255,255,255,0.95)] md:p-8">
         <div className="pointer-events-none absolute -top-28 right-[-82px] size-72 rounded-full bg-[#bfd3ff]/45 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-28 left-4 size-80 rounded-full bg-[#d5dfff]/42 blur-3xl" />
@@ -234,7 +233,7 @@ export function RouteDashboard() {
             Compare rails on cost, settlement speed, and reliability with a transparent, audit-ready decision output.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">
+          <div className="grid grid-cols-1 gap-3 sm:min-w-[320px] sm:grid-cols-2">
             <HeroMetric
               label="Volatility"
               value={result ? `${(result.metadata.volatilityFactor * 100).toFixed(2)}%` : "0.00%"}
@@ -251,8 +250,8 @@ export function RouteDashboard() {
         </Alert>
       ) : null}
 
-      <section className="grid items-start gap-6 xl:grid-cols-[390px_1fr]">
-        <Card className="sticky top-4 rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
+      <section className="grid items-start gap-5 md:gap-6 xl:grid-cols-[390px_1fr]">
+        <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)] xl:sticky xl:top-4">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
               <Radar className="size-4.5 text-[#48639e]" />
@@ -414,11 +413,11 @@ export function RouteDashboard() {
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_16px_40px_-30px_rgba(46,68,125,0.36)]">
             <CardContent className="p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full gap-2 overflow-x-auto pb-1 md:w-auto md:pb-0">
                   <WorkspaceButton
                     label="Decision"
                     active={activeWorkspace === "decision"}
@@ -504,8 +503,8 @@ function WorkspaceButton({
       onClick={onClick}
       className={
         active
-          ? "rounded-full border border-[#355393] bg-[linear-gradient(180deg,#3a5ca4_0%,#2f4f90_100%)] text-white"
-          : "rounded-full border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b]"
+          ? "shrink-0 whitespace-nowrap rounded-full border border-[#355393] bg-[linear-gradient(180deg,#3a5ca4_0%,#2f4f90_100%)] text-white"
+          : "shrink-0 whitespace-nowrap rounded-full border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b]"
       }
     >
       {label}
@@ -582,11 +581,12 @@ function ComparisonPanel({ result }: { result: RouteDecisionResult | null }) {
         </CardTitle>
         <CardDescription className="font-light text-[#5c6f96]">Cost, speed, reliability, and score across rails.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Table>
+      <CardContent className="min-w-0">
+        <div className="w-full max-w-full overflow-x-auto">
+          <Table className="min-w-[680px] table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Rail</TableHead>
+              <TableHead className="w-[180px]">Rail</TableHead>
               <TableHead>Cost</TableHead>
               <TableHead>Fee %</TableHead>
               <TableHead>Time (h)</TableHead>
@@ -600,18 +600,19 @@ function ComparisonPanel({ result }: { result: RouteDecisionResult | null }) {
                 <TableCell className="font-medium text-[#203056]">
                   {quote.railName}
                   {quote.disqualifiedReason ? (
-                    <p className="mt-0.5 text-xs font-light text-amber-700">{quote.disqualifiedReason}</p>
+                    <p className="mt-0.5 break-words text-xs font-light text-amber-700">{quote.disqualifiedReason}</p>
                   ) : null}
                 </TableCell>
-                <TableCell className="font-light text-[#2b3e66]">{quote.totalCostSource.toFixed(2)}</TableCell>
-                <TableCell className="font-light text-[#2b3e66]">{quote.feePercent.toFixed(2)}%</TableCell>
-                <TableCell className="font-light text-[#2b3e66]">{quote.estimatedSettlementTimeHours.toFixed(1)}</TableCell>
-                <TableCell className="font-light text-[#2b3e66]">{quote.reliabilityScore.toFixed(3)}</TableCell>
-                <TableCell className="font-mono font-medium text-[#243d70]">{quote.score.toFixed(4)}</TableCell>
+                <TableCell className="whitespace-nowrap font-light text-[#2b3e66]">{quote.totalCostSource.toFixed(2)}</TableCell>
+                <TableCell className="whitespace-nowrap font-light text-[#2b3e66]">{quote.feePercent.toFixed(2)}%</TableCell>
+                <TableCell className="whitespace-nowrap font-light text-[#2b3e66]">{quote.estimatedSettlementTimeHours.toFixed(1)}</TableCell>
+                <TableCell className="whitespace-nowrap font-light text-[#2b3e66]">{quote.reliabilityScore.toFixed(3)}</TableCell>
+                <TableCell className="whitespace-nowrap font-mono font-medium text-[#243d70]">{quote.score.toFixed(4)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -633,9 +634,10 @@ function SimulationPanel({
         </CardTitle>
         <CardDescription className="font-light text-[#5c6f96]">Rail dominance and average selected cost.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0">
         {simulation ? (
-          <Table>
+          <div className="w-full max-w-full overflow-x-auto">
+            <Table className="min-w-[540px] table-fixed">
             <TableHeader>
               <TableRow>
                 <TableHead>Rail</TableHead>
@@ -656,7 +658,8 @@ function SimulationPanel({
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
             Run simulation to populate this workspace.
@@ -741,7 +744,7 @@ function ReplayPanel({
             ))}
 
             {replayPageInfo ? (
-              <div className="mt-3 flex items-center justify-between rounded-xl border border-[#d6e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f0f5ff_100%)] px-3 py-2">
+              <div className="mt-3 flex flex-col items-start justify-between gap-2 rounded-xl border border-[#d6e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f0f5ff_100%)] px-3 py-2 sm:flex-row sm:items-center">
                 <p className="text-xs font-light text-[#51658f]">
                   Page {replayPageInfo.page} of {replayPageInfo.totalPages} ({replayPageInfo.totalItems} items)
                 </p>
