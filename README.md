@@ -12,6 +12,9 @@ Given a transaction request, the engine compares multiple payment rails and sele
 
 It returns the selected route, full rail comparison, and a human-readable explanation.
 
+## Key Observation of the Simulations
+For most mid-sized transfers, Local Collection or Partner Rail usually wins because they keep total friction (fees + FX markup impact) lower while still settling reasonably fast; SWIFT tends to appear as the reliability leader but is often not selected unless constraints prioritize reliability or stricter corridor behavior. 
+
 ## Stack
 
 - Next.js 16 (App Router + route handlers)
