@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   TrendingUp,
   X,
+  GitBranch,
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -234,6 +235,15 @@ export function RouteDashboard() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:min-w-[320px] sm:grid-cols-2">
+            <a
+              href="https://github.com/Akash-YS05/fx-routing"
+              target="_blank"
+              rel="noreferrer"
+              className="col-span-1 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#cad9f8] bg-[linear-gradient(180deg,#ffffffd9_0%,#eef3ffd9_100%)] px-4 text-sm font-medium text-[#29457e] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92),0_8px_16px_-10px_rgba(87,116,183,0.28)] transition-colors hover:text-[#1f3767] sm:col-span-2"
+            >
+              <GitBranch className="size-4" />
+              View GitHub
+            </a>
             <HeroMetric
               label="Volatility"
               value={result ? `${(result.metadata.volatilityFactor * 100).toFixed(2)}%` : "0.00%"}
