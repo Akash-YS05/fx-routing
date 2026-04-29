@@ -1,10 +1,12 @@
 "use client";
 
-import { ComponentType, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  Activity,
+  ArrowRightLeft,
+  BriefcaseBusiness,
   Clock3,
-  Coins,
+  Crown,
+  Gauge,
   Radar,
   ShieldCheck,
   Sparkles,
@@ -61,8 +63,6 @@ export function RouteDashboard() {
   const [result, setResult] = useState<RouteDecisionResult | null>(null);
   const [simulation, setSimulation] = useState<SimulationSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const selectedRailCode = result?.selectedRoute.railCode;
 
   const simulationRows = useMemo(() => {
     if (!simulation) {
@@ -150,422 +150,370 @@ export function RouteDashboard() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 md:px-8">
-      <section className="rounded-2xl border border-blue-900/20 bg-[linear-gradient(135deg,#0f172a_0%,#1e1b4b_55%,#0f172a_100%)] p-8 text-slate-100 shadow-2xl">
-        <div className="flex flex-wrap items-center justify-between gap-6">
+    <main className="mx-auto flex w-full max-w-[1360px] flex-col gap-7 px-4 py-7 md:px-8 md:py-10">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-700/30 bg-[linear-gradient(125deg,#0b1222_5%,#0f1e3a_45%,#172554_100%)] p-7 text-slate-100 shadow-[0_25px_70px_-35px_rgba(15,23,42,0.85)] md:p-9">
+        <div className="pointer-events-none absolute -top-24 right-[-72px] size-64 rounded-full bg-cyan-400/18 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 left-20 size-72 rounded-full bg-blue-500/16 blur-3xl" />
+        <div className="relative z-10 grid gap-6 md:grid-cols-[1.25fr_auto] md:items-end">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-400 border border-blue-500/20">
-              <Sparkles className="size-3" /> Smart FX Routing Engine
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Cross-Border Payout Optimizer
+            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-200/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+              Smart FX Routing Engine
+            </p>
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-50 md:text-4xl">
+              Institutional-grade FX route intelligence
             </h1>
-            <p className="max-w-2xl text-slate-400 md:text-lg">
-              Intelligent multi-rail routing using real-time liquidity, volatility metrics, and reliability scoring.
+            <p className="max-w-2xl text-sm leading-relaxed text-slate-300 md:text-base">
+              Evaluate rails across pricing friction, settlement velocity, and reliability confidence with decision-grade
+              transparency.
             </p>
           </div>
-          <div className="flex gap-4">
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-4 backdrop-blur-sm min-w-[140px]">
-              <p className="text-xs font-medium text-slate-500 uppercase">Market Volatility</p>
-              <p className="text-2xl font-bold text-blue-400">
-                {result ? `${(result.metadata.volatilityFactor * 100).toFixed(2)}%` : "0.00%"}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-4 backdrop-blur-sm min-w-[140px]">
-              <p className="text-xs font-medium text-slate-500 uppercase">Active Rails</p>
-              <p className="text-2xl font-bold text-emerald-400">3</p>
-            </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:min-w-[330px]">
+            <HeroMetric
+              label="Volatility"
+              value={result ? `${(result.metadata.volatilityFactor * 100).toFixed(2)}%` : "0.00%"}
+            />
+            <HeroMetric label="Tracked Rails" value="3" />
           </div>
         </div>
       </section>
 
       {error ? (
-        <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-4 duration-300">
-          <AlertTitle>Routing Error</AlertTitle>
+        <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2 duration-300">
+          <AlertTitle>Routing error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <div className="space-y-6">
-          <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Radar className="size-5 text-blue-600" /> Configuration
-              </CardTitle>
-              <CardDescription>Configure payout parameters and constraints.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
+      <section className="grid items-start gap-6 xl:grid-cols-[390px_1fr]">
+        <Card className="rounded-2xl border-slate-300/75 bg-white/90 shadow-[0_22px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-slate-900">
+              <Radar className="size-4.5 text-slate-700" />
+              Routing Input
+            </CardTitle>
+            <CardDescription>Configure transaction intent and execution constraints.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormLabel label="Amount" />
+            <Input
+              type="number"
+              min={1}
+              value={formState.amount}
+              onChange={(event) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  amount: Number(event.target.value) || 0,
+                }))
+              }
+              className="h-10 rounded-xl border-slate-300 bg-white font-medium"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="amount" className="text-xs font-bold uppercase text-slate-500">Amount</Label>
-                <div className="relative">
-                  <Coins className="absolute left-3 top-2.5 size-4 text-slate-400" />
-                  <Input
-                    id="amount"
-                    type="number"
-                    min={1}
-                    className="pl-9 font-semibold"
-                    value={formState.amount}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        amount: Number(event.target.value) || 0,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sourceCurrency" className="text-xs font-bold uppercase text-slate-500">Source</Label>
-                  <Input
-                    id="sourceCurrency"
-                    className="font-mono font-bold"
-                    value={formState.sourceCurrency}
-                    maxLength={3}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        sourceCurrency: event.target.value.toUpperCase(),
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="destinationCurrency" className="text-xs font-bold uppercase text-slate-500">Destination</Label>
-                  <Input
-                    id="destinationCurrency"
-                    className="font-mono font-bold"
-                    value={formState.destinationCurrency}
-                    maxLength={3}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        destinationCurrency: event.target.value.toUpperCase(),
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Optimization Priority</Label>
-                <Select
-                  value={formState.priority}
-                  onValueChange={(value) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      priority: value as Priority,
-                    }))
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cheap">
-                      <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-emerald-500" />
-                        <span>Lowest Cost (Cheap)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="fast">
-                      <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-blue-500" />
-                        <span>Fastest Settlement (Fast)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="balanced">
-                      <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-amber-500" />
-                        <span>Mixed Metrics (Balanced)</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxTime" className="text-xs font-bold uppercase text-slate-500">Max Time (h)</Label>
-                  <Input
-                    id="maxTime"
-                    type="number"
-                    min={1}
-                    value={formState.maxTime ?? ""}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        maxTime: Number(event.target.value) || undefined,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxFeePercent" className="text-xs font-bold uppercase text-slate-500">Max Fee %</Label>
-                  <Input
-                    id="maxFeePercent"
-                    type="number"
-                    min={0.1}
-                    step={0.1}
-                    value={formState.maxFeePercent ?? ""}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        maxFeePercent: Number(event.target.value) || undefined,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="whatIfShock" className="text-xs font-bold uppercase text-slate-500">What-if FX Shock (%)</Label>
-                  <span className={`text-xs font-bold ${formState.whatIfShockPercent && formState.whatIfShockPercent > 0 ? 'text-red-500' : formState.whatIfShockPercent && formState.whatIfShockPercent < 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
-                    {formState.whatIfShockPercent && formState.whatIfShockPercent > 0 ? '+' : ''}{formState.whatIfShockPercent}%
-                  </span>
-                </div>
+                <FormLabel label="Source" />
                 <Input
-                  id="whatIfShock"
-                  type="range"
-                  step={0.5}
-                  min={-10}
-                  max={10}
-                  value={formState.whatIfShockPercent ?? 0}
+                  value={formState.sourceCurrency}
+                  maxLength={3}
                   onChange={(event) =>
                     setFormState((prev) => ({
                       ...prev,
-                      whatIfShockPercent: Number(event.target.value) || 0,
+                      sourceCurrency: event.target.value.toUpperCase(),
                     }))
                   }
-                  className="h-2 bg-slate-100 accent-blue-600"
+                  className="h-10 rounded-xl border-slate-300 bg-white font-mono font-semibold tracking-wide"
                 />
-                <p className="text-[10px] text-slate-400 text-center italic">Simulate market rate fluctuations</p>
               </div>
-
-              <div className="flex flex-col gap-3 pt-2">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 shadow-md font-bold" disabled={isSubmitting} onClick={submitRoute}>
-                  {isSubmitting ? "Processing..." : "Calculate Best Route"}
-                </Button>
-                <Button variant="outline" className="w-full font-medium" disabled={isSimulating} onClick={runSimulation}>
-                  {isSimulating ? "Running Simulation..." : "Run 1000x Stress Test"}
-                </Button>
+              <div className="space-y-2">
+                <FormLabel label="Destination" />
+                <Input
+                  value={formState.destinationCurrency}
+                  maxLength={3}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      destinationCurrency: event.target.value.toUpperCase(),
+                    }))
+                  }
+                  className="h-10 rounded-xl border-slate-300 bg-white font-mono font-semibold tracking-wide"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        <div className="space-y-6">
-          <Card className={`border-slate-200 shadow-lg transition-all duration-500 ${result ? 'ring-2 ring-blue-500/20' : ''}`}>
-            <CardHeader className="pb-4">
+            <div className="space-y-2">
+              <FormLabel label="Priority" />
+              <Select
+                value={formState.priority}
+                onValueChange={(value) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    priority: value as Priority,
+                  }))
+                }
+              >
+                <SelectTrigger className="h-10 w-full rounded-xl border-slate-300 bg-white">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cheap">Cheap</SelectItem>
+                  <SelectItem value="fast">Fast</SelectItem>
+                  <SelectItem value="balanced">Balanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <FormLabel label="Max Time (h)" />
+                <Input
+                  type="number"
+                  min={1}
+                  value={formState.maxTime ?? ""}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      maxTime: Number(event.target.value) || undefined,
+                    }))
+                  }
+                  className="h-10 rounded-xl border-slate-300 bg-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <FormLabel label="Max Fee %" />
+                <Input
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={formState.maxFeePercent ?? ""}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      maxFeePercent: Number(event.target.value) || undefined,
+                    }))
+                  }
+                  className="h-10 rounded-xl border-slate-300 bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 border-t border-slate-200 pt-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <TrendingUp className="size-5 text-emerald-600" /> Best Available Route
-                </CardTitle>
-                {result && (
-                  <Badge variant={result.selectedRoute.anomalyFlag ? "destructive" : "outline"} className="px-3 py-1">
-                    {result.selectedRoute.anomalyFlag ? "High Cost Anomaly" : "Standard Route"}
-                  </Badge>
-                )}
+                <FormLabel label="What-if FX Shock" />
+                <span className="font-mono text-xs font-semibold text-slate-500">
+                  {formState.whatIfShockPercent && formState.whatIfShockPercent > 0 ? "+" : ""}
+                  {formState.whatIfShockPercent ?? 0}%
+                </span>
               </div>
-              <CardDescription>Optimized rail selection based on current market state.</CardDescription>
+              <Input
+                type="range"
+                min={-10}
+                max={10}
+                step={0.5}
+                value={formState.whatIfShockPercent ?? 0}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    whatIfShockPercent: Number(event.target.value) || 0,
+                  }))
+                }
+                className="h-2 rounded-full border-0 bg-slate-200 px-0"
+              />
+            </div>
+
+            <div className="grid gap-2 pt-2">
+              <Button
+                className="h-10 rounded-xl bg-slate-900 text-slate-50 hover:bg-slate-800"
+                disabled={isSubmitting}
+                onClick={submitRoute}
+              >
+                {isSubmitting ? "Evaluating route..." : "Compute Optimal Route"}
+              </Button>
+              <Button
+                variant="outline"
+                className="h-10 rounded-xl border-slate-300 bg-white hover:bg-slate-50"
+                disabled={isSimulating}
+                onClick={runSimulation}
+              >
+                {isSimulating ? "Running simulation..." : "Simulate 1000 Transactions"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6">
+          <Card className="rounded-2xl border-slate-300/75 bg-white/90 shadow-[0_22px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
+            <CardHeader className="pb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Crown className="size-4.5 text-amber-600" />
+                  Selected Route
+                </CardTitle>
+                {result ? (
+                  <Badge variant="outline" className="border-slate-300 bg-white text-[11px] uppercase tracking-wider">
+                    {result.selectedRoute.anomalyFlag ? "High Friction Flag" : "Policy Clean"}
+                  </Badge>
+                ) : null}
+              </div>
+              <CardDescription>Decision output with rationale and operational impact.</CardDescription>
             </CardHeader>
             <CardContent>
               {result ? (
-                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-                  <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center gap-4">
-                      <div className="flex size-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg">
-                        <Activity className="size-6" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-500">Selected Provider</p>
-                        <h3 className="text-xl font-bold text-slate-900">{result.selectedRoute.railName}</h3>
-                      </div>
+                <div className="space-y-5">
+                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Recommended Rail</p>
+                      <h3 className="mt-1 text-2xl font-semibold text-slate-900">{result.selectedRoute.railName}</h3>
+                      <p className="mt-1 text-xs text-slate-500">Code: {result.selectedRoute.railCode}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-slate-500">Route Efficiency</p>
-                      <p className="text-xl font-mono font-bold text-blue-600">
-                        {((1 - result.selectedRoute.score) * 100).toFixed(1)}%
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Composite Score</p>
+                      <p className="font-mono text-2xl font-semibold text-slate-900">
+                        {result.selectedRoute.score.toFixed(4)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                    <Metric title="Total Friction" value={result.selectedRoute.totalCostSource.toFixed(2)} icon={Coins} subtitle={formState.sourceCurrency} />
-                    <Metric title="Value Received" value={result.selectedRoute.convertedAmount.toLocaleString()} icon={TrendingUp} subtitle={formState.destinationCurrency} color="text-emerald-600" />
-                    <Metric title="Fee Burden" value={`${result.selectedRoute.feePercent.toFixed(2)}%`} icon={Activity} />
-                    <Metric title="Settlement" value={`${result.selectedRoute.estimatedSettlementTimeHours.toFixed(1)}h`} icon={Clock3} />
-                    <Metric title="Reliability" value={result.selectedRoute.reliabilityScore.toFixed(3)} icon={ShieldCheck} />
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <StatTile icon={BriefcaseBusiness} label="Total Cost" value={result.selectedRoute.totalCostSource.toFixed(2)} />
+                    <StatTile
+                      icon={ArrowRightLeft}
+                      label="Converted Amount"
+                      value={result.selectedRoute.convertedAmount.toFixed(2)}
+                    />
+                    <StatTile icon={Clock3} label="Settlement" value={`${result.selectedRoute.estimatedSettlementTimeHours}h`} />
+                    <StatTile icon={ShieldCheck} label="Reliability" value={`${(result.selectedRoute.reliabilityScore * 100).toFixed(1)}%`} />
                   </div>
 
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                    <div className="flex gap-3">
-                      <div className="mt-0.5">
-                        <div className="flex size-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">i</div>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Strategic Reasoning</p>
-                        <p className="text-sm leading-relaxed text-blue-900 font-medium">
-                          {result.explanation}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-500">Explanation</p>
+                    <p className="text-sm leading-relaxed text-slate-700">{result.explanation}</p>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-4 rounded-full bg-slate-100 p-4">
-                    <Radar className="size-8 text-slate-300" />
-                  </div>
-                  <h3 className="text-lg font-medium text-slate-900">Awaiting Input</h3>
-                  <p className="max-w-[280px] text-sm text-slate-500">
-                    Configure your payout and click &quot;Calculate&quot; to view the optimal routing analysis.
-                  </p>
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-sm text-slate-500">
+                  Submit a transaction profile to generate route intelligence.
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-100">
-              <CardTitle className="text-lg">Multi-Rail Comparison</CardTitle>
-              <CardDescription>Deep-dive into how different rails performed for this request.</CardDescription>
+          <Card className="rounded-2xl border-slate-300/75 bg-white/90 shadow-[0_22px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Gauge className="size-4.5 text-slate-700" />
+                Cross-Rail Comparison
+              </CardTitle>
+              <CardDescription>Cost, speed, reliability, and score across all available rails.</CardDescription>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent>
               <Table>
-                <TableHeader className="bg-slate-50/30">
-                  <TableRow className="hover:bg-transparent border-none">
-                    <TableHead className="w-[180px] text-xs font-bold uppercase text-slate-500">Rail Network</TableHead>
-                    <TableHead className="text-xs font-bold uppercase text-slate-500">Total Friction</TableHead>
-                    <TableHead className="text-xs font-bold uppercase text-slate-500">Efficiency</TableHead>
-                    <TableHead className="text-xs font-bold uppercase text-slate-500">Speed</TableHead>
-                    <TableHead className="text-xs font-bold uppercase text-slate-500 text-right">Reliability</TableHead>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Rail</TableHead>
+                    <TableHead>Cost</TableHead>
+                    <TableHead>Fee %</TableHead>
+                    <TableHead>Time (h)</TableHead>
+                    <TableHead>Reliability</TableHead>
+                    <TableHead>Score</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {result ? result.comparisons.map((quote) => (
-                    <TableRow key={quote.railCode} className={`transition-colors ${quote.railCode === selectedRailCode ? "bg-blue-50/60 hover:bg-blue-50" : "hover:bg-slate-50"}`}>
-                      <TableCell className="font-semibold text-slate-900">
-                        <div className="flex flex-col">
-                          <span>{quote.railName}</span>
-                          {quote.disqualifiedReason && (
-                            <span className="text-[10px] text-red-500 font-normal leading-tight mt-0.5">{quote.disqualifiedReason}</span>
-                          )}
-                        </div>
+                  {result?.comparisons.map((quote) => (
+                    <TableRow key={quote.railCode} className={quote.railCode === result.selectedRoute.railCode ? "bg-slate-100/75" : ""}>
+                      <TableCell className="font-medium text-slate-900">
+                        {quote.railName}
+                        {quote.disqualifiedReason ? (
+                          <p className="mt-0.5 text-xs text-amber-700">{quote.disqualifiedReason}</p>
+                        ) : null}
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{quote.totalCostSource.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-                            <div 
-                              className={`h-full ${quote.railCode === selectedRailCode ? 'bg-blue-600' : 'bg-slate-400'}`} 
-                              style={{ width: `${Math.max(5, (1 - quote.score) * 100)}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-medium text-slate-600">{(quote.score).toFixed(3)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-600">{quote.estimatedSettlementTimeHours}h</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline" className={`font-mono text-[10px] ${quote.reliabilityScore > 0.9 ? 'border-emerald-200 text-emerald-700 bg-emerald-50' : ''}`}>
-                          {quote.reliabilityScore.toFixed(3)}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{quote.totalCostSource.toFixed(2)}</TableCell>
+                      <TableCell>{quote.feePercent.toFixed(2)}%</TableCell>
+                      <TableCell>{quote.estimatedSettlementTimeHours.toFixed(1)}</TableCell>
+                      <TableCell>{quote.reliabilityScore.toFixed(3)}</TableCell>
+                      <TableCell className="font-mono">{quote.score.toFixed(4)}</TableCell>
                     </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-slate-400 italic">
-                        Perform a calculation to see comparison data.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
 
-          {simulation && (
-            <Card className="border-slate-200 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
-              <CardHeader className="bg-emerald-50/30 border-b border-emerald-100">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Activity className="size-4 text-emerald-600" /> Stress Test Analytics (1000x)
-                  </CardTitle>
-                  <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
-                    Priority: {formState.priority}
-                  </Badge>
-                </div>
-                <CardDescription>Statistical dominance and average cost performance.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
+          <Card className="rounded-2xl border-slate-300/75 bg-white/90 shadow-[0_22px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <TrendingUp className="size-4.5 text-slate-700" />
+                Batch Simulation
+              </CardTitle>
+              <CardDescription>Rail selection dominance and average selected cost over 1000 runs.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {simulation ? (
                 <Table>
                   <TableHeader>
-                    <TableRow className="hover:bg-transparent border-none">
-                      <TableHead className="text-xs font-bold uppercase text-slate-500">Rail</TableHead>
-                      <TableHead className="text-xs font-bold uppercase text-slate-500">Wins</TableHead>
-                      <TableHead className="text-xs font-bold uppercase text-slate-500">Dominance</TableHead>
-                      <TableHead className="text-xs font-bold uppercase text-slate-500 text-right">Avg Friction</TableHead>
+                    <TableRow>
+                      <TableHead>Rail</TableHead>
+                      <TableHead>Chosen</TableHead>
+                      <TableHead>Win Rate</TableHead>
+                      <TableHead>Average Cost</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {simulationRows.map((row) => (
                       <TableRow key={row.railCode}>
-                        <TableCell className="font-bold text-slate-700">{row.railCode}</TableCell>
-                        <TableCell className="text-sm">{row.count}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="w-8 text-xs font-medium">{(row.count / simulation.totalRuns * 100).toFixed(0)}%</span>
-                            <div className="h-1.5 flex-1 max-w-[100px] overflow-hidden rounded-full bg-slate-100">
-                              <div 
-                                className="h-full bg-emerald-500" 
-                                style={{ width: `${(row.count / simulation.totalRuns * 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm font-semibold">{row.averageCost.toFixed(2)}</TableCell>
+                        <TableCell className="font-medium text-slate-900">{row.railCode}</TableCell>
+                        <TableCell>{row.count}</TableCell>
+                        <TableCell>{((row.count / simulation.totalRuns) * 100).toFixed(1)}%</TableCell>
+                        <TableCell>{row.averageCost.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-sm text-slate-500">
+                  Run the simulation to view route distribution statistics.
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </section>
     </main>
   );
 }
 
-function Metric({
-  title,
-  value,
-  icon: Icon,
-  subtitle,
-  color = "text-slate-900"
-}: {
-  title: string;
-  value: string;
-  icon: ComponentType<{ className?: string }>;
-  subtitle?: string;
-  color?: string;
-}) {
+function FormLabel({ label }: { label: string }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-blue-100 hover:shadow-md">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          {title}
-        </p>
-        <Icon className="size-3.5 text-blue-500/50" />
-      </div>
-      <div className="flex items-baseline gap-1">
-        <p className={`text-xl font-bold tracking-tight ${color}`}>{value}</p>
-        {subtitle && <span className="text-[10px] font-bold text-slate-400 uppercase">{subtitle}</span>}
-      </div>
+    <Label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      {label}
+    </Label>
+  );
+}
+
+function HeroMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-500/35 bg-slate-900/30 px-4 py-3 backdrop-blur-sm">
+      <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">{label}</p>
+      <p className="mt-1 font-mono text-2xl font-semibold text-slate-50">{value}</p>
     </div>
   );
 }
 
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
+      <p className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-slate-500">
+        <Icon className="size-3.5" />
+        {label}
+      </p>
+      <p className="mt-1.5 font-mono text-lg font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
