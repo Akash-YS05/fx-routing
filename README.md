@@ -1,6 +1,6 @@
-# Smart FX Routing Engine
+# Foreign Exchange Routing Engine
 
-A production-style fintech simulation app built with Next.js App Router, PostgreSQL, Prisma, TypeScript, and shadcn/ui.
+A production-style fintech app simulating how platforms optimize cross-border payment routing under cost, speed, and reliability constraints. Built with Next.js App Router, PostgreSQL, Prisma, TypeScript, and shadcn/ui
 
 ## What this app does
 
@@ -11,6 +11,9 @@ Given a transaction request, the engine compares multiple payment rails and sele
 - Reliability
 
 It returns the selected route, full rail comparison, and a human-readable explanation.
+
+## Key Observation of the Simulations
+For most mid-sized transfers, Local Collection or Partner Rail usually wins because they keep total friction (fees + FX markup impact) lower while still settling reasonably fast; SWIFT tends to appear as the reliability leader but is often not selected unless constraints prioritize reliability or stricter corridor behavior. 
 
 ## Stack
 
