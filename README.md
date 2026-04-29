@@ -1,6 +1,6 @@
-# Smart FX Routing Engine
+# Foreign Exchange Routing Engine
 
-A production-style fintech simulation app built with Next.js App Router, PostgreSQL, Prisma, TypeScript, and shadcn/ui.
+A production-style fintech app simulating how platforms optimize cross-border payment routing under cost, speed, and reliability constraints. Built with Next.js App Router, PostgreSQL, Prisma, TypeScript, and shadcn/ui
 
 ## What this app does
 
