@@ -47,7 +47,7 @@ type RouteFormState = {
 };
 
 const initialState: RouteFormState = {
-  amount: 1000,
+  amount: 2500,
   sourceCurrency: "USD",
   destinationCurrency: "INR",
   priority: "balanced",
@@ -68,7 +68,6 @@ export function RouteDashboard() {
     if (!simulation) {
       return [];
     }
-
     return Object.entries(simulation.chosenCountByRail)
       .map(([railCode, count]) => ({
         railCode,
@@ -81,13 +80,10 @@ export function RouteDashboard() {
   async function submitRoute() {
     setIsSubmitting(true);
     setError(null);
-
     try {
       const response = await fetch("/api/route", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: formState.amount,
           sourceCurrency: formState.sourceCurrency,
@@ -100,17 +96,14 @@ export function RouteDashboard() {
           whatIfShockPercent: formState.whatIfShockPercent,
         }),
       });
-
       const data = (await response.json()) as RouteDecisionResult | { details?: string; error?: string };
       if (!response.ok) {
-        const details = "details" in data ? data.details : undefined;
-        throw new Error(details ?? "Failed to evaluate route.");
+        const message = "details" in data ? data.details : undefined;
+        throw new Error(message ?? "Route evaluation failed");
       }
-
       setResult(data as RouteDecisionResult);
-    } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : "Failed to process request";
-      setError(message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "System error");
     } finally {
       setIsSubmitting(false);
     }
@@ -119,13 +112,10 @@ export function RouteDashboard() {
   async function runSimulation() {
     setIsSimulating(true);
     setError(null);
-
     try {
       const response = await fetch("/api/route/simulate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           count: 1000,
           sourceCurrency: formState.sourceCurrency,
@@ -133,47 +123,44 @@ export function RouteDashboard() {
           priority: formState.priority,
         }),
       });
-
       const data = (await response.json()) as SimulationSummary | { details?: string };
       if (!response.ok) {
-        const details = "details" in data ? data.details : undefined;
-        throw new Error(details ?? "Failed to run simulation.");
+        const message = "details" in data ? data.details : undefined;
+        throw new Error(message ?? "Simulation failed");
       }
-
       setSimulation(data as SimulationSummary);
-    } catch (simulationError) {
-      const message = simulationError instanceof Error ? simulationError.message : "Simulation request failed";
-      setError(message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Batch error");
     } finally {
       setIsSimulating(false);
     }
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[1360px] flex-col gap-7 px-4 py-7 md:px-8 md:py-10">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-700/30 bg-[linear-gradient(125deg,#0b1222_5%,#0f1e3a_45%,#172554_100%)] p-7 text-slate-100 shadow-[0_25px_70px_-35px_rgba(15,23,42,0.85)] md:p-9">
-        <div className="pointer-events-none absolute -top-24 right-[-72px] size-64 rounded-full bg-cyan-400/18 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 left-20 size-72 rounded-full bg-blue-500/16 blur-3xl" />
-        <div className="relative z-10 grid gap-6 md:grid-cols-[1.25fr_auto] md:items-end">
+    <main className="mx-auto flex w-full max-w-[1380px] flex-col gap-7 px-4 py-6 md:px-8 md:py-9">
+      <section className="relative overflow-hidden rounded-3xl border border-[#313f60]/35 bg-[linear-gradient(130deg,#0d152a_0%,#142649_44%,#1c315a_100%)] p-6 text-slate-100 shadow-[0_32px_90px_-50px_rgba(7,17,35,0.95)] md:p-8">
+        <div className="pointer-events-none absolute -top-24 right-[-76px] size-72 rounded-full bg-cyan-300/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-36 left-8 size-80 rounded-full bg-indigo-300/12 blur-3xl" />
+        <div className="relative z-10 grid gap-6 md:grid-cols-[1.2fr_auto] md:items-end">
           <div className="space-y-3">
-            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-200/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-200/35 bg-cyan-100/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+              <Sparkles className="size-3.5" />
               Smart FX Routing Engine
             </p>
             <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-50 md:text-4xl">
-              Institutional-grade FX route intelligence
+              Professional cross-border route optimization
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-slate-300 md:text-base">
-              Evaluate rails across pricing friction, settlement velocity, and reliability confidence with decision-grade
-              transparency.
+              Compare rails on cost, settlement speed, and reliability with a transparent, audit-ready decision output.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:min-w-[330px]">
+          <div className="grid grid-cols-2 gap-3 sm:min-w-[340px]">
             <HeroMetric
               label="Volatility"
               value={result ? `${(result.metadata.volatilityFactor * 100).toFixed(2)}%` : "0.00%"}
             />
-            <HeroMetric label="Tracked Rails" value="3" />
+            <HeroMetric label="Active Rails" value="3" />
           </div>
         </div>
       </section>
@@ -190,9 +177,9 @@ export function RouteDashboard() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-slate-900">
               <Radar className="size-4.5 text-slate-700" />
-              Routing Input
+              Input Panel
             </CardTitle>
-            <CardDescription>Configure transaction intent and execution constraints.</CardDescription>
+            <CardDescription>Set transaction values and execution constraints.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormLabel label="Amount" />
@@ -252,7 +239,7 @@ export function RouteDashboard() {
                 }
               >
                 <SelectTrigger className="h-10 w-full rounded-xl border-slate-300 bg-white">
-                  <SelectValue placeholder="Select priority" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cheap">Cheap</SelectItem>
@@ -354,7 +341,7 @@ export function RouteDashboard() {
                   </Badge>
                 ) : null}
               </div>
-              <CardDescription>Decision output with rationale and operational impact.</CardDescription>
+              <CardDescription>Best route and the rationale behind the choice.</CardDescription>
             </CardHeader>
             <CardContent>
               {result ? (
@@ -401,9 +388,9 @@ export function RouteDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-slate-900">
                 <Gauge className="size-4.5 text-slate-700" />
-                Cross-Rail Comparison
+                Rail Comparison
               </CardTitle>
-              <CardDescription>Cost, speed, reliability, and score across all available rails.</CardDescription>
+              <CardDescription>Cost, speed, reliability, and score across rails.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -442,9 +429,9 @@ export function RouteDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-slate-900">
                 <TrendingUp className="size-4.5 text-slate-700" />
-                Batch Simulation
+                1000x Simulation
               </CardTitle>
-              <CardDescription>Rail selection dominance and average selected cost over 1000 runs.</CardDescription>
+              <CardDescription>Rail dominance and average selected cost in batch routing.</CardDescription>
             </CardHeader>
             <CardContent>
               {simulation ? (
@@ -470,7 +457,7 @@ export function RouteDashboard() {
                 </Table>
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-sm text-slate-500">
-                  Run the simulation to view route distribution statistics.
+                  Run simulation to view route distribution.
                 </div>
               )}
             </CardContent>
@@ -482,11 +469,7 @@ export function RouteDashboard() {
 }
 
 function FormLabel({ label }: { label: string }) {
-  return (
-    <Label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-      {label}
-    </Label>
-  );
+  return <Label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</Label>;
 }
 
 function HeroMetric({ label, value }: { label: string; value: string }) {

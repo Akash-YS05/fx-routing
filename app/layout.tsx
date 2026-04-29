@@ -1,21 +1,28 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Serif, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-plex-sans",
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: "--font-ibm-plex-mono",
-  weight: ["400", "500"],
+const plexSerif = IBM_Plex_Serif({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex-serif",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Smart FX Routing Engine",
-  description: "Production-style cross-border route optimization simulator.",
+  title: "Smart FX Routing Engine | Institutional Cross-Border Payments",
+  description: "Real-time multi-rail payout optimization for global fintech operations.",
 };
 
 export default function RootLayout({
@@ -26,9 +33,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${plexSans.variable} ${plexSerif.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
 }
