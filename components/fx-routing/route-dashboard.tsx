@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   ArrowRightLeft,
+  Bell,
   BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
@@ -55,6 +56,8 @@ type RouteFormState = {
   whatIfShockPercent?: number;
 };
 
+type ActiveWorkspace = "decision" | "comparison" | "simulation" | "replay";
+
 const initialState: RouteFormState = {
   amount: 2500,
   sourceCurrency: "USD",
@@ -77,6 +80,7 @@ export function RouteDashboard() {
   >(null);
   const [isReplaySectionOpen, setIsReplaySectionOpen] = useState(false);
   const [isReplayLoading, setIsReplayLoading] = useState(false);
+  const [activeWorkspace, setActiveWorkspace] = useState<ActiveWorkspace>("decision");
   const [error, setError] = useState<string | null>(null);
 
   const simulationRows = useMemo(() => {
@@ -116,6 +120,7 @@ export function RouteDashboard() {
         throw new Error(message ?? "Route evaluation failed");
       }
       setResult(data as RouteDecisionResult);
+      setActiveWorkspace("decision");
     } catch (err) {
       setError(err instanceof Error ? err.message : "System error");
     } finally {
@@ -143,6 +148,7 @@ export function RouteDashboard() {
         throw new Error(message ?? "Simulation failed");
       }
       setSimulation(data as SimulationSummary);
+      setActiveWorkspace("simulation");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Batch error");
     } finally {
@@ -172,6 +178,7 @@ export function RouteDashboard() {
         totalPages: pageData.totalPages,
       });
       setIsReplaySectionOpen(true);
+      setActiveWorkspace("replay");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Replay history error");
     } finally {
@@ -196,6 +203,7 @@ export function RouteDashboard() {
       }
 
       setResult(data as RouteDecisionResult);
+      setActiveWorkspace("decision");
       await loadReplayHistory(replayPageInfo?.page ?? 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Replay error");
@@ -204,27 +212,31 @@ export function RouteDashboard() {
     }
   }
 
+  const hasDecision = Boolean(result);
+  const hasSimulation = Boolean(simulation);
+  const hasReplay = isReplaySectionOpen && replayHistory.length > 0;
+
   return (
-    <main className="mx-auto flex w-full max-w-[1380px] flex-col gap-7 px-4 py-6 md:px-8 md:py-9">
+    <main className="mx-auto flex w-full max-w-[1380px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
       <section className="relative overflow-hidden rounded-3xl border border-[#dce5fb] bg-[linear-gradient(132deg,#f4f7ff_0%,#edf2ff_42%,#f7f9ff_100%)] p-6 shadow-[0_34px_70px_-48px_rgba(49,80,150,0.45),inset_0_1px_0_0_rgba(255,255,255,0.95)] md:p-8">
         <div className="pointer-events-none absolute -top-28 right-[-82px] size-72 rounded-full bg-[#bfd3ff]/45 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-28 left-4 size-80 rounded-full bg-[#d5dfff]/42 blur-3xl" />
 
-        <div className="relative z-10 grid gap-6 md:grid-cols-[1.2fr_auto] md:items-end">
+        <div className="relative z-10 grid gap-5 md:grid-cols-[1.2fr_auto] md:items-end">
           <div className="space-y-3">
-            <p className="inline-flex items-center gap-2 rounded-full border border-[#c9d7fc] bg-white/72 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[#41557e] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9)]">
-              {/* <Sparkles className="size-3.5 text-[#506ba9]" /> */}
+            <p className="inline-flex items-center gap-2 rounded-full border border-[#c9d7fc] bg-white/72 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[#41557e]">
+              <Sparkles className="size-3.5 text-[#506ba9]" />
               Smart FX Routing Engine
             </p>
             <h1 className="text-3xl font-normal leading-tight tracking-tight text-[#1d2b49] md:text-4xl">
-              Precise, elegant cross-border route optimization
+              Route intelligence with a real-time workspace
             </h1>
-            <p className="max-w-2xl text-sm leading-relaxed font-light text-[#4b5f89] md:text-base">
-              Evaluate rails by cost, settlement speed, and reliability with crisp controls and explainable decisions.
+            <p className="max-w-2xl text-sm font-light leading-relaxed text-[#4b5f89] md:text-base">
+              Results now surface instantly in the workspace below, so you do not need to scroll to track simulation
+              output.
             </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:min-w-[340px]">
+          <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">
             <HeroMetric
               label="Volatility"
               value={result ? `${(result.metadata.volatilityFactor * 100).toFixed(2)}%` : "0.00%"}
@@ -242,15 +254,13 @@ export function RouteDashboard() {
       ) : null}
 
       <section className="grid items-start gap-6 xl:grid-cols-[390px_1fr]">
-        <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
+        <Card className="sticky top-4 rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
               <Radar className="size-4.5 text-[#48639e]" />
               Input Panel
             </CardTitle>
-            <CardDescription className="font-light text-[#5c6f96]">
-              Set transaction values and execution constraints.
-            </CardDescription>
+            <CardDescription className="font-light text-[#5c6f96]">Set values and launch analysis.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormLabel label="Amount" />
@@ -264,7 +274,7 @@ export function RouteDashboard() {
                   amount: Number(event.target.value) || 0,
                 }))
               }
-              className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056] shadow-[inset_0_1px_2px_0_rgba(34,55,100,0.08),0_1px_0_0_rgba(255,255,255,0.7)]"
+              className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056]"
             />
 
             <div className="grid grid-cols-2 gap-3">
@@ -279,7 +289,7 @@ export function RouteDashboard() {
                       sourceCurrency: event.target.value.toUpperCase(),
                     }))
                   }
-                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-mono font-medium tracking-wide text-[#21345e] shadow-[inset_0_1px_2px_0_rgba(34,55,100,0.08)]"
+                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-mono font-medium tracking-wide text-[#21345e]"
                 />
               </div>
               <div className="space-y-2">
@@ -293,7 +303,7 @@ export function RouteDashboard() {
                       destinationCurrency: event.target.value.toUpperCase(),
                     }))
                   }
-                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-mono font-medium tracking-wide text-[#21345e] shadow-[inset_0_1px_2px_0_rgba(34,55,100,0.08)]"
+                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-mono font-medium tracking-wide text-[#21345e]"
                 />
               </div>
             </div>
@@ -309,7 +319,7 @@ export function RouteDashboard() {
                   }))
                 }
               >
-                <SelectTrigger className="h-10 w-full rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056] shadow-[inset_0_1px_2px_0_rgba(34,55,100,0.08)]">
+                <SelectTrigger className="h-10 w-full rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -333,7 +343,7 @@ export function RouteDashboard() {
                       maxTime: Number(event.target.value) || undefined,
                     }))
                   }
-                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056] shadow-[inset_0_1px_2px_0_rgba(34,55,100,0.08)]"
+                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056]"
                 />
               </div>
               <div className="space-y-2">
@@ -349,7 +359,7 @@ export function RouteDashboard() {
                       maxFeePercent: Number(event.target.value) || undefined,
                     }))
                   }
-                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056] shadow-[inset_0_1px_2px_0_rgba(34,55,100,0.08)]"
+                  className="h-10 rounded-xl border-[#d2dbf1] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] font-light text-[#203056]"
                 />
               </div>
             </div>
@@ -380,7 +390,7 @@ export function RouteDashboard() {
 
             <div className="grid gap-2 pt-2">
               <Button
-                className="h-10 rounded-xl border border-[#355393] bg-[linear-gradient(180deg,#3a5ca4_0%,#2f4f90_100%)] text-[#f2f6ff] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_8px_14px_-8px_rgba(28,56,117,0.55)] hover:bg-[linear-gradient(180deg,#3f63ad_0%,#335699_100%)]"
+                className="h-10 rounded-xl border border-[#355393] bg-[linear-gradient(180deg,#3a5ca4_0%,#2f4f90_100%)] text-[#f2f6ff]"
                 disabled={isSubmitting}
                 onClick={submitRoute}
               >
@@ -388,7 +398,7 @@ export function RouteDashboard() {
               </Button>
               <Button
                 variant="outline"
-                className="h-10 rounded-xl border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92)] hover:bg-[linear-gradient(180deg,#ffffff_0%,#e8f0ff_100%)]"
+                className="h-10 rounded-xl border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b]"
                 disabled={isSimulating}
                 onClick={runSimulation}
               >
@@ -396,7 +406,7 @@ export function RouteDashboard() {
               </Button>
               <Button
                 variant="outline"
-                className="h-10 rounded-xl border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92)] hover:bg-[linear-gradient(180deg,#ffffff_0%,#e8f0ff_100%)]"
+                className="h-10 rounded-xl border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b]"
                 disabled={isReplayLoading}
                 onClick={() => loadReplayHistory(1)}
               >
@@ -406,261 +416,371 @@ export function RouteDashboard() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6">
-          <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
-            <CardHeader className="pb-4">
+        <div className="space-y-4">
+          <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_16px_40px_-30px_rgba(46,68,125,0.36)]">
+            <CardContent className="p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
-                  <Crown className="size-4.5 text-[#b7882f]" />
-                  Selected Route
-                </CardTitle>
-                {result ? (
-                  <Badge
-                    variant="outline"
-                    className="border-[#d0daf2] bg-[linear-gradient(180deg,#ffffff_0%,#f4f7ff_100%)] text-[10px] font-medium uppercase tracking-[0.16em] text-[#3f588d]"
-                  >
-                    {result.selectedRoute.anomalyFlag ? "High Friction Flag" : "Policy Clean"}
-                  </Badge>
+                <div className="flex flex-wrap gap-2">
+                  <WorkspaceButton
+                    label="Decision"
+                    active={activeWorkspace === "decision"}
+                    disabled={!hasDecision}
+                    onClick={() => setActiveWorkspace("decision")}
+                  />
+                  <WorkspaceButton
+                    label="Comparison"
+                    active={activeWorkspace === "comparison"}
+                    disabled={!hasDecision}
+                    onClick={() => setActiveWorkspace("comparison")}
+                  />
+                  <WorkspaceButton
+                    label="Simulation"
+                    active={activeWorkspace === "simulation"}
+                    disabled={!hasSimulation}
+                    onClick={() => setActiveWorkspace("simulation")}
+                  />
+                  <WorkspaceButton
+                    label="Replay"
+                    active={activeWorkspace === "replay"}
+                    disabled={!hasReplay}
+                    onClick={() => setActiveWorkspace("replay")}
+                  />
+                </div>
+                {activeWorkspace === "simulation" && hasSimulation ? (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#d5e1f8] bg-[#f5f9ff] px-3 py-1 text-xs text-[#3e578f]">
+                    <Bell className="size-3.5" />
+                    Simulation ready
+                  </div>
                 ) : null}
               </div>
-              <CardDescription className="font-light text-[#5c6f96]">
-                Best route and rationale at this market state.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {result ? (
-                <div className="space-y-5">
-                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-[#d7e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f2f6ff_100%)] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.94)]">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Recommended Rail</p>
-                      <h3 className="mt-1 text-2xl font-normal text-[#1d2b49]">{result.selectedRoute.railName}</h3>
-                      <p className="mt-1 text-xs font-light text-[#62739b]">Code: {result.selectedRoute.railCode}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Composite Score</p>
-                      <p className="font-mono text-2xl font-medium text-[#1f2f53]">
-                        {result.selectedRoute.score.toFixed(4)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <StatTile
-                      icon={BriefcaseBusiness}
-                      label="Total Cost"
-                      value={result.selectedRoute.totalCostSource.toFixed(2)}
-                    />
-                    <StatTile
-                      icon={ArrowRightLeft}
-                      label="Converted Amount"
-                      value={result.selectedRoute.convertedAmount.toFixed(2)}
-                    />
-                    <StatTile
-                      icon={Clock3}
-                      label="Settlement"
-                      value={`${result.selectedRoute.estimatedSettlementTimeHours}h`}
-                    />
-                    <StatTile
-                      icon={ShieldCheck}
-                      label="Reliability"
-                      value={`${(result.selectedRoute.reliabilityScore * 100).toFixed(1)}%`}
-                    />
-                  </div>
-
-                  <div className="rounded-2xl border border-[#d7e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92)]">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Explanation</p>
-                    <p className="text-sm font-light leading-relaxed text-[#2d3d62]">{result.explanation}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
-                  Submit a transaction profile to generate route intelligence.
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
-                  <TrendingUp className="size-4.5 text-[#48639e]" />
-                  Replay Decisions
-                </CardTitle>
-                {isReplaySectionOpen ? (
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="rounded-lg text-[#466199] hover:bg-[#eaf0ff]"
-                    onClick={() => setIsReplaySectionOpen(false)}
-                    aria-label="Close replay section"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                ) : null}
-              </div>
-              <CardDescription className="font-light text-[#5c6f96]">
-                Re-run historical simulations with their original parameters.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isReplaySectionOpen && replayHistory.length ? (
-                <div className="space-y-2">
-                  {replayHistory.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col gap-2 rounded-xl border border-[#d6e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92)] md:flex-row md:items-center md:justify-between"
-                    >
-                      <div className="space-y-1">
-                        <p className="text-sm font-normal text-[#1f2f53]">
-                          {item.amount.toFixed(2)} {item.sourceCurrency} to {item.destinationCurrency}
-                        </p>
-                        <p className="text-xs font-light text-[#62739b]">
-                          {item.priority.toUpperCase()} | {item.selectedRailCode} | {new Date(item.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-lg border-[#cfdaf3] bg-[linear-gradient(180deg,#ffffff_0%,#eef3ff_100%)] text-[#2f4b82]"
-                        onClick={() => replayDecision(item.id)}
-                        disabled={isSubmitting}
-                      >
-                        Replay
-                      </Button>
-                    </div>
-                  ))}
+          {activeWorkspace === "decision" ? (
+            <DecisionPanel result={result} />
+          ) : null}
 
-                  {replayPageInfo ? (
-                    <div className="mt-3 flex items-center justify-between rounded-xl border border-[#d6e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f0f5ff_100%)] px-3 py-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92)]">
-                      <p className="text-xs font-light text-[#51658f]">
-                        Page {replayPageInfo.page} of {replayPageInfo.totalPages} ({replayPageInfo.totalItems} items)
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          className="rounded-lg border-[#cfdaf3] bg-[linear-gradient(180deg,#ffffff_0%,#eef3ff_100%)] text-[#2f4b82]"
-                          disabled={isReplayLoading || replayPageInfo.page <= 1}
-                          onClick={() => loadReplayHistory(replayPageInfo.page - 1)}
-                          aria-label="Previous replay page"
-                        >
-                          <ChevronLeft className="size-4" />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          className="rounded-lg border-[#cfdaf3] bg-[linear-gradient(180deg,#ffffff_0%,#eef3ff_100%)] text-[#2f4b82]"
-                          disabled={isReplayLoading || replayPageInfo.page >= replayPageInfo.totalPages}
-                          onClick={() => loadReplayHistory(replayPageInfo.page + 1)}
-                          aria-label="Next replay page"
-                        >
-                          <ChevronRight className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
-                  {isReplaySectionOpen
-                    ? "No replay records found for this page."
-                    : "Load replay history to view and rerun previous decisions."}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {activeWorkspace === "comparison" ? (
+            <ComparisonPanel result={result} />
+          ) : null}
 
-          <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
-                <Gauge className="size-4.5 text-[#48639e]" />
-                Rail Comparison
-              </CardTitle>
-              <CardDescription className="font-light text-[#5c6f96]">
-                Cost, speed, reliability, and score across rails.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Rail</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Fee %</TableHead>
-                    <TableHead>Time (h)</TableHead>
-                    <TableHead>Reliability</TableHead>
-                    <TableHead>Score</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result?.comparisons.map((quote) => (
-                    <TableRow
-                      key={quote.railCode}
-                      className={quote.railCode === result.selectedRoute.railCode ? "bg-[#eff4ff]" : ""}
-                    >
-                      <TableCell className="font-medium text-[#203056]">
-                        {quote.railName}
-                        {quote.disqualifiedReason ? (
-                          <p className="mt-0.5 text-xs font-light text-amber-700">{quote.disqualifiedReason}</p>
-                        ) : null}
-                      </TableCell>
-                      <TableCell className="font-light text-[#2b3e66]">{quote.totalCostSource.toFixed(2)}</TableCell>
-                      <TableCell className="font-light text-[#2b3e66]">{quote.feePercent.toFixed(2)}%</TableCell>
-                      <TableCell className="font-light text-[#2b3e66]">{quote.estimatedSettlementTimeHours.toFixed(1)}</TableCell>
-                      <TableCell className="font-light text-[#2b3e66]">{quote.reliabilityScore.toFixed(3)}</TableCell>
-                      <TableCell className="font-mono font-medium text-[#243d70]">{quote.score.toFixed(4)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          {activeWorkspace === "simulation" ? (
+            <SimulationPanel simulation={simulation} simulationRows={simulationRows} />
+          ) : null}
 
-          <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36),inset_0_1px_0_0_rgba(255,255,255,0.9)]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
-                <TrendingUp className="size-4.5 text-[#48639e]" />
-                1000x Simulation
-              </CardTitle>
-              <CardDescription className="font-light text-[#5c6f96]">
-                Rail dominance and average selected cost in batch routing.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {simulation ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Rail</TableHead>
-                      <TableHead>Chosen</TableHead>
-                      <TableHead>Win Rate</TableHead>
-                      <TableHead>Average Cost</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {simulationRows.map((row) => (
-                      <TableRow key={row.railCode}>
-                        <TableCell className="font-medium text-[#203056]">{row.railCode}</TableCell>
-                        <TableCell className="font-light text-[#2b3e66]">{row.count}</TableCell>
-                        <TableCell className="font-light text-[#2b3e66]">
-                          {((row.count / simulation.totalRuns) * 100).toFixed(1)}%
-                        </TableCell>
-                        <TableCell className="font-light text-[#2b3e66]">{row.averageCost.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
-                  Run simulation to view route distribution.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {activeWorkspace === "replay" ? (
+            <ReplayPanel
+              isReplaySectionOpen={isReplaySectionOpen}
+              replayHistory={replayHistory}
+              replayPageInfo={replayPageInfo}
+              isReplayLoading={isReplayLoading}
+              isSubmitting={isSubmitting}
+              onReplay={replayDecision}
+              onClose={() => setIsReplaySectionOpen(false)}
+              onPrevPage={() => replayPageInfo && loadReplayHistory(replayPageInfo.page - 1)}
+              onNextPage={() => replayPageInfo && loadReplayHistory(replayPageInfo.page + 1)}
+            />
+          ) : null}
         </div>
       </section>
     </main>
+  );
+}
+
+function WorkspaceButton({
+  label,
+  active,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      size="sm"
+      variant={active ? "default" : "outline"}
+      disabled={disabled}
+      onClick={onClick}
+      className={
+        active
+          ? "rounded-full border border-[#355393] bg-[linear-gradient(180deg,#3a5ca4_0%,#2f4f90_100%)] text-white"
+          : "rounded-full border-[#ccd8f3] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5ff_100%)] text-[#2b447b]"
+      }
+    >
+      {label}
+    </Button>
+  );
+}
+
+function DecisionPanel({ result }: { result: RouteDecisionResult | null }) {
+  return (
+    <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36)]">
+      <CardHeader className="pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
+            <Crown className="size-4.5 text-[#b7882f]" />
+            Selected Route
+          </CardTitle>
+          {result ? (
+            <Badge
+              variant="outline"
+              className="border-[#d0daf2] bg-[linear-gradient(180deg,#ffffff_0%,#f4f7ff_100%)] text-[10px] font-medium uppercase tracking-[0.16em] text-[#3f588d]"
+            >
+              {result.selectedRoute.anomalyFlag ? "High Friction Flag" : "Policy Clean"}
+            </Badge>
+          ) : null}
+        </div>
+        <CardDescription className="font-light text-[#5c6f96]">Best route and rationale.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {result ? (
+          <div className="space-y-5">
+            <div className="flex items-start justify-between gap-4 rounded-2xl border border-[#d7e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f2f6ff_100%)] p-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Recommended Rail</p>
+                <h3 className="mt-1 text-2xl font-normal text-[#1d2b49]">{result.selectedRoute.railName}</h3>
+                <p className="mt-1 text-xs font-light text-[#62739b]">Code: {result.selectedRoute.railCode}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Composite Score</p>
+                <p className="font-mono text-2xl font-medium text-[#1f2f53]">
+                  {result.selectedRoute.score.toFixed(4)}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <StatTile icon={BriefcaseBusiness} label="Total Cost" value={result.selectedRoute.totalCostSource.toFixed(2)} />
+              <StatTile icon={ArrowRightLeft} label="Converted Amount" value={result.selectedRoute.convertedAmount.toFixed(2)} />
+              <StatTile icon={Clock3} label="Settlement" value={`${result.selectedRoute.estimatedSettlementTimeHours}h`} />
+              <StatTile icon={ShieldCheck} label="Reliability" value={`${(result.selectedRoute.reliabilityScore * 100).toFixed(1)}%`} />
+            </div>
+
+            <div className="rounded-2xl border border-[#d7e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] p-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Explanation</p>
+              <p className="text-sm font-light leading-relaxed text-[#2d3d62]">{result.explanation}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
+            Run a route analysis to populate this view.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ComparisonPanel({ result }: { result: RouteDecisionResult | null }) {
+  return (
+    <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36)]">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
+          <Gauge className="size-4.5 text-[#48639e]" />
+          Rail Comparison
+        </CardTitle>
+        <CardDescription className="font-light text-[#5c6f96]">Cost, speed, reliability, and score across rails.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Rail</TableHead>
+              <TableHead>Cost</TableHead>
+              <TableHead>Fee %</TableHead>
+              <TableHead>Time (h)</TableHead>
+              <TableHead>Reliability</TableHead>
+              <TableHead>Score</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {result?.comparisons.map((quote) => (
+              <TableRow key={quote.railCode} className={quote.railCode === result.selectedRoute.railCode ? "bg-[#eff4ff]" : ""}>
+                <TableCell className="font-medium text-[#203056]">
+                  {quote.railName}
+                  {quote.disqualifiedReason ? (
+                    <p className="mt-0.5 text-xs font-light text-amber-700">{quote.disqualifiedReason}</p>
+                  ) : null}
+                </TableCell>
+                <TableCell className="font-light text-[#2b3e66]">{quote.totalCostSource.toFixed(2)}</TableCell>
+                <TableCell className="font-light text-[#2b3e66]">{quote.feePercent.toFixed(2)}%</TableCell>
+                <TableCell className="font-light text-[#2b3e66]">{quote.estimatedSettlementTimeHours.toFixed(1)}</TableCell>
+                <TableCell className="font-light text-[#2b3e66]">{quote.reliabilityScore.toFixed(3)}</TableCell>
+                <TableCell className="font-mono font-medium text-[#243d70]">{quote.score.toFixed(4)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SimulationPanel({
+  simulation,
+  simulationRows,
+}: {
+  simulation: SimulationSummary | null;
+  simulationRows: Array<{ railCode: string; count: number; averageCost: number }>;
+}) {
+  return (
+    <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36)]">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
+          <TrendingUp className="size-4.5 text-[#48639e]" />
+          1000x Simulation
+        </CardTitle>
+        <CardDescription className="font-light text-[#5c6f96]">Rail dominance and average selected cost.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {simulation ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Rail</TableHead>
+                <TableHead>Chosen</TableHead>
+                <TableHead>Win Rate</TableHead>
+                <TableHead>Average Cost</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {simulationRows.map((row) => (
+                <TableRow key={row.railCode}>
+                  <TableCell className="font-medium text-[#203056]">{row.railCode}</TableCell>
+                  <TableCell className="font-light text-[#2b3e66]">{row.count}</TableCell>
+                  <TableCell className="font-light text-[#2b3e66]">
+                    {((row.count / simulation.totalRuns) * 100).toFixed(1)}%
+                  </TableCell>
+                  <TableCell className="font-light text-[#2b3e66]">{row.averageCost.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
+            Run simulation to populate this workspace.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReplayPanel({
+  isReplaySectionOpen,
+  replayHistory,
+  replayPageInfo,
+  isReplayLoading,
+  isSubmitting,
+  onReplay,
+  onClose,
+  onPrevPage,
+  onNextPage,
+}: {
+  isReplaySectionOpen: boolean;
+  replayHistory: ReplayHistoryItem[];
+  replayPageInfo: Pick<ReplayHistoryPage, "page" | "totalPages" | "totalItems"> | null;
+  isReplayLoading: boolean;
+  isSubmitting: boolean;
+  onReplay: (transactionId: string) => void;
+  onClose: () => void;
+  onPrevPage: () => void;
+  onNextPage: () => void;
+}) {
+  return (
+    <Card className="rounded-2xl border-[#d7dff3] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] shadow-[0_18px_42px_-32px_rgba(46,68,125,0.36)]">
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 font-medium text-[#1f2f53]">
+            <TrendingUp className="size-4.5 text-[#48639e]" />
+            Replay Decisions
+          </CardTitle>
+          {isReplaySectionOpen ? (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="rounded-lg text-[#466199] hover:bg-[#eaf0ff]"
+              onClick={onClose}
+              aria-label="Close replay section"
+            >
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+        <CardDescription className="font-light text-[#5c6f96]">
+          Re-run historical simulations with original parameters.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isReplaySectionOpen && replayHistory.length ? (
+          <div className="space-y-2">
+            {replayHistory.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col gap-2 rounded-xl border border-[#d6e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] p-3 md:flex-row md:items-center md:justify-between"
+              >
+                <div className="space-y-1">
+                  <p className="text-sm font-normal text-[#1f2f53]">
+                    {item.amount.toFixed(2)} {item.sourceCurrency} to {item.destinationCurrency}
+                  </p>
+                  <p className="text-xs font-light text-[#62739b]">
+                    {item.priority.toUpperCase()} | {item.selectedRailCode} | {new Date(item.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-lg border-[#cfdaf3] bg-[linear-gradient(180deg,#ffffff_0%,#eef3ff_100%)] text-[#2f4b82]"
+                  onClick={() => onReplay(item.id)}
+                  disabled={isSubmitting}
+                >
+                  Replay
+                </Button>
+              </div>
+            ))}
+
+            {replayPageInfo ? (
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-[#d6e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f0f5ff_100%)] px-3 py-2">
+                <p className="text-xs font-light text-[#51658f]">
+                  Page {replayPageInfo.page} of {replayPageInfo.totalPages} ({replayPageInfo.totalItems} items)
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    className="rounded-lg border-[#cfdaf3] bg-[linear-gradient(180deg,#ffffff_0%,#eef3ff_100%)] text-[#2f4b82]"
+                    disabled={isReplayLoading || replayPageInfo.page <= 1}
+                    onClick={onPrevPage}
+                    aria-label="Previous replay page"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    className="rounded-lg border-[#cfdaf3] bg-[linear-gradient(180deg,#ffffff_0%,#eef3ff_100%)] text-[#2f4b82]"
+                    disabled={isReplayLoading || replayPageInfo.page >= replayPageInfo.totalPages}
+                    onClick={onNextPage}
+                    aria-label="Next replay page"
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">
+            {isReplaySectionOpen
+              ? "No replay records found for this page."
+              : "Load replay history to populate this workspace."}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -670,7 +790,7 @@ function FormLabel({ label }: { label: string }) {
 
 function HeroMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#cad9f8] bg-[linear-gradient(180deg,#ffffffcc_0%,#edf3ffcc_100%)] px-4 py-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92),0_8px_16px_-10px_rgba(87,116,183,0.28)] backdrop-blur-sm">
+    <div className="rounded-2xl border border-[#cad9f8] bg-[linear-gradient(180deg,#ffffffcc_0%,#edf3ffcc_100%)] px-4 py-3">
       <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#60739f]">{label}</p>
       <p className="mt-1 font-mono text-2xl font-medium text-[#223760]">{value}</p>
     </div>
@@ -687,7 +807,7 @@ function StatTile({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-[#d8e1f4] bg-[linear-gradient(180deg,#ffffff_0%,#f3f7ff_100%)] p-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.92)]">
+    <div className="rounded-2xl border border-[#d8e1f4] bg-[linear-gradient(180deg,#ffffff_0%,#f3f7ff_100%)] p-3.5">
       <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-[#60739f]">
         <Icon className="size-3.5 text-[#4c669f]" />
         {label}
