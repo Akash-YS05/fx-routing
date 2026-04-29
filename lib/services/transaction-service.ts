@@ -1,6 +1,5 @@
 import { prisma } from "@/db/prisma";
 import {
-  ReplayHistoryItem,
   ReplayHistoryPage,
   RouteDecisionResult,
   RouteRequest,
@@ -84,11 +83,6 @@ export async function runSimulationBatch(params: {
     chosenCountByRail,
     averageCostByRail,
   };
-}
-
-export async function getReplayHistory(limit = 12): Promise<ReplayHistoryItem[]> {
-  const page = await getReplayHistoryPage({ page: 1, pageSize: limit });
-  return page.items;
 }
 
 export async function getReplayHistoryPage(params?: {

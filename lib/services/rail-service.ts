@@ -7,16 +7,7 @@ export async function getActiveRails(): Promise<RailConfig[]> {
     orderBy: { name: "asc" },
   });
 
-  return rails.map((rail: {
-    id: string;
-    code: string;
-    name: string;
-    flatFee: unknown;
-    percentFee: unknown;
-    fxMarkup: unknown;
-    avgSettlementTimeHours: unknown;
-    reliabilityScore: unknown;
-  }) => ({
+  return rails.map((rail: (typeof rails)[number]) => ({
     id: rail.id,
     code: rail.code,
     name: rail.name,

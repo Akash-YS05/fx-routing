@@ -225,15 +225,13 @@ export function RouteDashboard() {
         <div className="relative z-10 grid gap-5 md:grid-cols-[1.2fr_auto] md:items-end">
           <div className="space-y-3">
             <p className="inline-flex items-center gap-2 rounded-full border border-[#c9d7fc] bg-white/72 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[#41557e]">
-              <Sparkles className="size-3.5 text-[#506ba9]" />
               Smart FX Routing Engine
             </p>
             <h1 className="text-3xl font-normal leading-tight tracking-tight text-[#1d2b49] md:text-4xl">
-              Route intelligence with a real-time workspace
+            Professional cross-border route optimization
             </h1>
             <p className="max-w-2xl text-sm font-light leading-relaxed text-[#4b5f89] md:text-base">
-              Results now surface instantly in the workspace below, so you do not need to scroll to track simulation
-              output.
+            Compare rails on cost, settlement speed, and reliability with a transparent, audit-ready decision output.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">

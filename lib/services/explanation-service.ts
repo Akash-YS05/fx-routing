@@ -7,15 +7,17 @@ export function buildRouteExplanation(params: {
 }): string {
   const { selected, all, priority } = params;
 
-  const lowestCost = [...all]
-    .sort((a, b) => a.totalCostSource - b.totalCostSource)
-    .at(0);
-  const fastest = [...all]
-    .sort((a, b) => a.estimatedSettlementTimeHours - b.estimatedSettlementTimeHours)
-    .at(0);
-  const mostReliable = [...all]
-    .sort((a, b) => b.reliabilityScore - a.reliabilityScore)
-    .at(0);
+  if (!all.length) {
+    return `${selected.railName} is selected as the optimal route for this transaction.`;
+  }
+
+  const lowestCost = all.reduce((best, current) =>
+    current.totalCostSource < best.totalCostSource ? current : best,
+  );
+  const fastest = all.reduce((best, current) =>
+    current.estimatedSettlementTimeHours < best.estimatedSettlementTimeHours ? current : best,
+  );
+  const swiftCost = all.find((rail) => rail.railCode === "SWIFT")?.totalCostSource;
 
   const isLowestCost = selected.railCode === lowestCost?.railCode;
   const isFastest = selected.railCode === fastest?.railCode;
@@ -23,7 +25,7 @@ export function buildRouteExplanation(params: {
   let reasoning = "";
   if (priority === "cheap") {
     reasoning = isLowestCost 
-      ? `This route is the most economical option available, saving you ${((all.find(r => r.railCode === "SWIFT")?.totalCostSource || 0) - selected.totalCostSource).toFixed(2)} compared to traditional SWIFT.`
+      ? `This route is the most economical option available${typeof swiftCost === "number" ? `, saving you ${(swiftCost - selected.totalCostSource).toFixed(2)} compared to traditional SWIFT` : ""}.`
       : `Although ${lowestCost?.railName} is slightly cheaper, this route was selected because it offers better reliability/speed while maintaining a very low cost profile.`;
   } else if (priority === "fast") {
     reasoning = isFastest
