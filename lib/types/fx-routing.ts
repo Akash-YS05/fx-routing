@@ -23,6 +23,16 @@ export type RailConfig = {
   fxMarkup: number;
   avgSettlementTimeHours: number;
   reliabilityScore: number;
+  supportedPairs?: string[]; // Optional: if provided, rail only supports these pairs
+};
+
+export type RouteHop = {
+  railCode: string;
+  railName: string;
+  sourceCurrency: string;
+  destinationCurrency: string;
+  fxRateAfterMarkup: number;
+  totalCostSource: number;
 };
 
 export type RailQuote = {
@@ -41,6 +51,7 @@ export type RailQuote = {
   anomalyFlag: boolean;
   score: number;
   disqualifiedReason?: string;
+  hops?: RouteHop[];
 };
 
 export type RouteDecisionResult = {

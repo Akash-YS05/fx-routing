@@ -570,6 +570,29 @@ function DecisionPanel({ result }: { result: RouteDecisionResult | null }) {
               <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Explanation</p>
               <p className="text-sm font-light leading-relaxed text-[#2d3d62]">{result.explanation}</p>
             </div>
+
+            {result.selectedRoute.hops && result.selectedRoute.hops.length > 1 && (
+              <div className="rounded-2xl border border-[#d7e0f4] bg-[linear-gradient(180deg,#ffffff_0%,#f6f8ff_100%)] p-4">
+                <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-[#60739f]">Routing Topology</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {result.selectedRoute.hops.map((hop, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="flex flex-col items-center gap-1 rounded-xl border border-[#cbd5e1] bg-white px-3 py-2 shadow-sm">
+                        <span className="text-xs font-bold text-[#1e293b]">{hop.sourceCurrency}</span>
+                        <span className="text-[9px] text-[#64748b]">{hop.railCode}</span>
+                      </div>
+                      <ChevronRight className="size-4 text-[#94a3b8]" />
+                      {i === result.selectedRoute.hops!.length - 1 && (
+                        <div className="flex flex-col items-center gap-1 rounded-xl border border-[#3a5ca4] bg-[#3a5ca4] px-3 py-2 text-white shadow-sm">
+                          <span className="text-xs font-bold">{hop.destinationCurrency}</span>
+                          <span className="text-[9px] opacity-80">End</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-[#d6e0f4] bg-[linear-gradient(180deg,#fbfdff_0%,#f4f8ff_100%)] p-8 text-center text-sm font-light text-[#60739f]">

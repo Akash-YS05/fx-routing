@@ -35,9 +35,15 @@ export function buildRouteExplanation(params: {
     reasoning = "This route provides the mathematically optimal balance between transaction cost, settlement speed, and rail reliability.";
   }
 
+  let multiHopDetails = "";
+  if (selected.hops && selected.hops.length > 1) {
+    const routeStr = selected.hops.map(h => h.sourceCurrency).join(" → ") + " → " + selected.hops[selected.hops.length-1].destinationCurrency;
+    multiHopDetails = ` This path optimizes across multiple liquidity pools: ${routeStr}.`;
+  }
+
   return [
     `${selected.railName} is selected as your optimal path with an efficiency score of ${((1 - selected.score) * 100).toFixed(1)}%.`,
-    reasoning,
+    reasoning + multiHopDetails,
     !isLowestCost && lowestCost ? `Note: ${lowestCost.railName} is cheaper (${lowestCost.totalCostSource.toFixed(2)}) but significantly slower.` : "",
     !isFastest && fastest ? `Note: ${fastest.railName} is faster (${fastest.estimatedSettlementTimeHours}h) but more expensive.` : "",
   ]

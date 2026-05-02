@@ -10,6 +10,7 @@ import { roundTo } from "@/lib/utils/number";
 import { buildRouteExplanation } from "@/lib/services/explanation-service";
 import { getFxRateQuote } from "@/lib/services/fx-rate-service";
 import { getActiveRails } from "@/lib/services/rail-service";
+import { findOptimalRoute } from "@/lib/services/routing-service";
 
 function computeRailQuote(params: {
   rail: RailConfig;
@@ -26,20 +27,13 @@ function computeRailQuote(params: {
   const feePercent = (totalFeeSource / amount) * 100;
 
   // FX logic
-  // fluctuatedRate is the current market rate (e.g. 1 USD = 83 INR)
-  // rail.fxMarkup is a decimal (e.g. 0.01 for 1%)
-  // Effective rate for the user is market rate * (1 - markup)
   const fxRateAfterMarkup = fluctuatedRate * (1 - rail.fxMarkup);
   const convertedAmount = amount * fxRateAfterMarkup;
 
-  // FX Loss in source currency = amount * rail.fxMarkup
   const fxLossSource = amount * rail.fxMarkup;
-  
-  // Total cost in source currency = fees + fx loss
-  // This is what the user "loses" compared to mid-market rate
   const totalCostSource = totalFeeSource + fxLossSource;
 
-  const platformMarginSource = fxLossSource + feeFromPercent * 0.1; // 10% of percent fee as extra margin
+  const platformMarginSource = fxLossSource + feeFromPercent * 0.1;
 
   const anomalyFlag = feePercent > avgFeePercent * ANOMALY_COST_MULTIPLIER;
 
@@ -63,10 +57,15 @@ function computeRailQuote(params: {
 function normalizeScores(quotes: Omit<RailQuote, "score">[], priority: RouteRequest["priority"]): RailQuote[] {
   const weights = PRIORITY_WEIGHTS[priority];
 
-  const maxCost = Math.max(...quotes.map((q) => q.totalCostSource));
-  const minCost = Math.min(...quotes.map((q) => q.totalCostSource));
-  const maxTime = Math.max(...quotes.map((q) => q.estimatedSettlementTimeHours));
-  const minTime = Math.min(...quotes.map((q) => q.estimatedSettlementTimeHours));
+  const validQuotes = quotes.filter(q => !("disqualifiedReason" in q) || !q.disqualifiedReason);
+  if (validQuotes.length === 0) {
+    return quotes.map(q => ({ ...q, score: 1 })) as RailQuote[];
+  }
+
+  const maxCost = Math.max(...validQuotes.map((q) => q.totalCostSource));
+  const minCost = Math.min(...validQuotes.map((q) => q.totalCostSource));
+  const maxTime = Math.max(...validQuotes.map((q) => q.estimatedSettlementTimeHours));
+  const minTime = Math.min(...validQuotes.map((q) => q.estimatedSettlementTimeHours));
 
   return quotes.map((quote) => {
     const normalizedCost =
@@ -115,27 +114,76 @@ export async function computeOptimalRoute(request: RouteRequest): Promise<RouteD
     throw new Error("No active rails configured. Seed rails with `npm run prisma:seed`.");
   }
 
+  // Create request-scoped cache for FX rates to ensure consistency in multi-hop calculations
+  const fxRateCache = new Map<string, import("./fx-rate-service").FxRateQuote>();
+
   const fxQuote = await getFxRateQuote({
     sourceCurrency: request.sourceCurrency,
     destinationCurrency: request.destinationCurrency,
     whatIfShockPercent: request.whatIfShockPercent,
+    cache: fxRateCache,
   });
 
-  const avgFeePercent =
-    rails.reduce((acc, rail) => acc + ((rail.flatFee + request.amount * rail.percentFee) / request.amount) * 100, 0) /
-    rails.length;
+  // Calculate avgFeePercent only over rails that support this pair
+  const supportingRails = rails.filter(rail => {
+    if (rail.supportedPairs) {
+      return rail.supportedPairs.includes(`${request.sourceCurrency}_${request.destinationCurrency}`);
+    }
+    return true;
+  });
 
-  const baseQuotes = rails.map((rail) =>
-    computeRailQuote({
+  const avgFeePercent = supportingRails.length > 0
+    ? supportingRails.reduce((acc, rail) => acc + ((rail.flatFee + request.amount * rail.percentFee) / request.amount) * 100, 0) /
+      supportingRails.length
+    : 0;
+
+  // 1. Base single-hop quotes
+  const baseQuotes: Omit<RailQuote, "score">[] = rails.map((rail) => {
+     // Check if rail supports this pair directly
+     if (rail.supportedPairs && !rail.supportedPairs.includes(`${request.sourceCurrency}_${request.destinationCurrency}`)) {
+      return {
+        railCode: rail.code,
+        railName: rail.name,
+        fxRateBase: fxQuote.baseRate,
+        fxRateWithFluctuation: fxQuote.fluctuatedRate,
+        fxRateAfterMarkup: 0,
+        convertedAmount: 0,
+        totalFeeSource: 0,
+        totalCostSource: 0,
+        feePercent: 0,
+        estimatedSettlementTimeHours: rail.avgSettlementTimeHours,
+        reliabilityScore: rail.reliabilityScore,
+        platformMarginSource: 0,
+        anomalyFlag: false,
+        disqualifiedReason: `Direct pair ${request.sourceCurrency}_${request.destinationCurrency} not supported`,
+      };
+    }
+
+    return computeRailQuote({
       rail,
       amount: request.amount,
       baseRate: fxQuote.baseRate,
       fluctuatedRate: fxQuote.fluctuatedRate,
       avgFeePercent,
-    }),
-  );
+    });
+  });
 
-  const scored = normalizeScores(baseQuotes, request.priority);
+  // 2. Optimal multi-hop search
+  const multiHopRoute = await findOptimalRoute({
+    amount: request.amount,
+    sourceCurrency: request.sourceCurrency,
+    destinationCurrency: request.destinationCurrency,
+    priority: request.priority,
+    rails,
+    fxRateCache,
+  });
+
+  const allQuotes = [...baseQuotes];
+  if (multiHopRoute && multiHopRoute.hops && multiHopRoute.hops.length > 1) {
+    allQuotes.push(multiHopRoute);
+  }
+
+  const scored = normalizeScores(allQuotes, request.priority);
   const constrained = applyConstraints(scored, request);
   const eligible = constrained.filter((quote) => !quote.disqualifiedReason);
 

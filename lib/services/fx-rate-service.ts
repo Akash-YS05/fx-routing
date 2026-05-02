@@ -43,8 +43,15 @@ export async function getFxRateQuote(params: {
   sourceCurrency: string;
   destinationCurrency: string;
   whatIfShockPercent?: number;
+  cache?: Map<string, FxRateQuote>;
 }): Promise<FxRateQuote> {
   const pair = buildPair(params.sourceCurrency, params.destinationCurrency);
+
+  // Check request-scoped cache first to ensure consistency within a single request
+  if (params.cache?.has(pair)) {
+    return params.cache.get(pair)!;
+  }
+
   const now = new Date();
 
   const cachedRate = await prisma.fxRate.findUnique({ where: { pair } });
@@ -57,6 +64,16 @@ export async function getFxRateQuote(params: {
   const volatilityFactor = randomVolatilityFactor();
   const whatIfShockFactor = clamp((params.whatIfShockPercent ?? 0) / 100, -0.20, 0.20);
   const fluctuatedRate = roundTo(baseRate * (1 + volatilityFactor + whatIfShockFactor), 6);
+
+  const result = {
+    pair,
+    baseRate,
+    volatilityFactor,
+    fluctuatedRate,
+  };
+
+  // Store in request-scoped cache
+  params.cache?.set(pair, result);
 
   // Only update DB if cache is missing or expired to prevent deadlocks in parallel simulations
   if (!isCacheValid) {
@@ -79,10 +96,5 @@ export async function getFxRateQuote(params: {
     });
   }
 
-  return {
-    pair,
-    baseRate,
-    volatilityFactor,
-    fluctuatedRate,
-  };
+  return result;
 }
